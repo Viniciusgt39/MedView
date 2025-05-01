@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -119,9 +120,10 @@ const SidebarProvider = React.forwardRef<
     // Keyboard shortcut (Cmd/Ctrl + B) to toggle sidebar
     React.useEffect(() => {
       const handleKeyDown = (event: KeyboardEvent) => {
+         // Check if event.key exists and is a string before calling toLowerCase()
         if (
-          event.key && // Check if event.key exists
-          typeof event.key === 'string' && // Check if event.key is a string
+          event.key &&
+          typeof event.key === 'string' &&
           event.key.toLowerCase() === SIDEBAR_KEYBOARD_SHORTCUT &&
           (event.metaKey || event.ctrlKey)
         ) {
@@ -592,11 +594,7 @@ const SidebarMenuButton = React.forwardRef<
     const Comp = asChild ? Slot : "button"
     const { isMobile, state } = useSidebar()
 
-    const buttonContent = (
-         <>
-            {children}
-         </>
-    );
+    const buttonContent = children;
 
 
     const button = (
