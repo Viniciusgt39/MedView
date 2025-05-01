@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -19,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUp, ArrowDown, Minus, UserPlus, Users, AlertCircle, BarChart2, PieChart } from "lucide-react"; // Added Users, AlertCircle, BarChart2, PieChart
+import { ArrowUp, ArrowDown, Minus, UserPlus, Users, AlertCircle, Smile, CheckCircle } from "lucide-react"; // Changed BarChart2, PieChart icons
 import Link from "next/link";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
@@ -188,7 +189,7 @@ export default function DashboardPage() {
            <Card>
                <CardHeader>
                    <CardTitle className="flex items-center gap-2">
-                     <PieChart className="h-5 w-5 text-primary" />
+                     <Smile className="h-5 w-5 text-primary" /> {/* Changed Icon */}
                      Distribuição de Humor (Último)
                    </CardTitle>
                    <CardDescription>Distribuição do último humor registrado pelos pacientes.</CardDescription>
@@ -223,9 +224,10 @@ export default function DashboardPage() {
                                             position="inside"
                                             formatter={(value: string, entry: any) => {
                                                 const percentage = (entry.payload.percent * 100).toFixed(0);
-                                                return `${value}: ${percentage}%`;
+                                                // Only show label if percentage is significant enough (e.g., > 5%)
+                                                return percentage > 5 ? `${value}: ${percentage}%` : '';
                                              }}
-                                             className="fill-background text-xs font-medium" // Style label
+                                             className="fill-background text-xs font-medium pointer-events-none" // Style label
                                          />
                                         {moodChartData.map((entry) => (
                                             <Cell key={`cell-${entry.mood}`} fill={entry.fill} />
@@ -245,7 +247,7 @@ export default function DashboardPage() {
            <Card>
                <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                       <BarChart2 className="h-5 w-5 text-primary" />
+                       <CheckCircle className="h-5 w-5 text-primary" /> {/* Changed Icon */}
                        Distribuição de Adesão
                    </CardTitle>
                    <CardDescription>Distribuição dos níveis de adesão à medicação.</CardDescription>
@@ -255,13 +257,14 @@ export default function DashboardPage() {
                          <div className="flex items-center justify-center h-[250px]"> <Skeleton className="h-full w-full" /> </div>
                     ) : adherenceChartData.length > 0 ? (
                        <ChartContainer config={adherenceChartConfig} className="h-[250px] w-full">
-                           <BarChart accessibilityLayer data={adherenceChartData} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
+                           <BarChart accessibilityLayer data={adherenceChartData} margin={{ top: 20, right: 10, left: -15, bottom: 0 }}> {/* Added top margin for labels */}
                                <CartesianGrid vertical={false} strokeDasharray="3 3" />
                                 <XAxis
                                     dataKey="level"
                                     tickLine={false}
                                     tickMargin={10}
                                     axisLine={false}
+                                    fontSize={12} // Ensure labels fit
                                 />
                                 <YAxis allowDecimals={false} />
                                 <Tooltip
@@ -276,7 +279,7 @@ export default function DashboardPage() {
                                       <LabelList
                                         position="top"
                                         offset={4}
-                                        className="fill-foreground text-xs"
+                                        className="fill-foreground text-xs pointer-events-none"
                                         formatter={(value: number) => value.toString()}
                                     />
                                 </Bar>
@@ -375,7 +378,7 @@ export default function DashboardPage() {
             </TableBody>
           </Table>
            )}
-            {patients.length > 5 && (
+            {patients.length > 5 && !loading && ( // Only show if more than 5 patients and not loading
                  <div className="mt-4 text-center">
                      <Button asChild variant="link">
                          <Link href="/patients">Ver todos os pacientes</Link>
@@ -387,5 +390,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

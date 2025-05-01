@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -49,7 +50,7 @@ import {
   CalendarDays,
   Stethoscope,
   BrainCircuit, // Using BrainCircuit for AI Insights
-  ArrowUp, ArrowDown, Minus, Edit, Trash, PlusCircle, CheckCircle, XCircle, Clock // Icons for adherence
+  ArrowUp, ArrowDown, Minus, Edit, Trash, PlusCircle, CheckCircle, XCircle, Clock, Activity // Added Activity for EDA icon
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from 'date-fns';
@@ -106,6 +107,27 @@ const getTreatmentEventIcon = (type: TreatmentEvent['type']) => {
     }
 }
 
+// Component for displaying a single real-time metric
+interface RealTimeMetricProps {
+  icon: React.ElementType;
+  label: string;
+  value: number | string | undefined;
+  unit: string;
+  className?: string;
+  iconClassName?: string;
+}
+
+const RealTimeMetric: React.FC<RealTimeMetricProps> = ({ icon: Icon, label, value, unit, className, iconClassName }) => (
+    <Card className={cn("flex flex-col items-center justify-center p-4 text-center h-full", className)}>
+        <Icon className={cn("h-6 w-6 mb-2 text-primary", iconClassName)} />
+        <p className="text-sm font-medium text-muted-foreground">{label}</p>
+        <p className="text-3xl font-bold">
+            {value !== undefined && value !== null ? value : '--'}
+            <span className="text-lg font-normal text-muted-foreground ml-1">{unit}</span>
+        </p>
+    </Card>
+);
+
 // Main component for the patient profile page
 export default function PatientProfilePage() {
   const params = useParams();
@@ -119,6 +141,48 @@ export default function PatientProfilePage() {
   const [newNoteTitle, setNewNoteTitle] = React.useState("");
   const [newNoteContent, setNewNoteContent] = React.useState("");
   const [isAddingNote, setIsAddingNote] = React.useState(false);
+
+  // State for real-time data simulation
+  const [realTimeHR, setRealTimeHR] = React.useState<number | undefined>(undefined);
+  const [realTimeHRV, setRealTimeHRV] = React.useState<number | undefined>(undefined);
+  const [realTimeEDA, setRealTimeEDA] = React.useState<number | undefined>(undefined);
+
+  // Effect for real-time data simulation
+  React.useEffect(() => {
+    if (loading || !patient) return; // Don't run if loading or no patient data
+
+    // Get initial values from the *last* wearable data entry
+    const lastReading = patient.wearableData[patient.wearableData.length - 1];
+    let currentHR = lastReading?.heartRateBpm ?? 75;
+    let currentHRV = lastReading?.heartRateVariabilityMs ?? 60;
+    let currentEDA = lastReading?.edaMicrosiemens ?? 0.8;
+
+    // Set initial state values
+    setRealTimeHR(currentHR);
+    setRealTimeHRV(currentHRV);
+    setRealTimeEDA(parseFloat(currentEDA.toFixed(1))); // Format EDA initially
+
+
+    const intervalId = setInterval(() => {
+       // Simulate slight variations around the current value
+      currentHR += (Math.random() - 0.5) * 4; // Fluctuate HR slightly more
+      currentHR = Math.max(50, Math.min(120, Math.round(currentHR))); // Clamp and round HR
+
+      currentHRV += (Math.random() - 0.5) * 6; // Fluctuate HRV
+      currentHRV = Math.max(25, Math.min(130, Math.round(currentHRV))); // Clamp and round HRV
+
+      currentEDA += (Math.random() - 0.5) * 0.2; // Fluctuate EDA
+      currentEDA = Math.max(0.1, Math.min(2.5, currentEDA)); // Clamp EDA
+
+      // Update state
+      setRealTimeHR(currentHR);
+      setRealTimeHRV(currentHRV);
+      setRealTimeEDA(parseFloat(currentEDA.toFixed(1))); // Keep EDA with one decimal place
+
+    }, 1500); // Update every 1.5 seconds
+
+    return () => clearInterval(intervalId); // Cleanup interval on component unmount or when patient changes
+  }, [loading, patient]); // Rerun effect if loading status or patient data changes
 
 
   // Fetch patient data on component mount or when patientId changes
@@ -253,8 +317,8 @@ export default function PatientProfilePage() {
     hrv: d.heartRateVariabilityMs,
     eda: d.edaMicrosiemens,
     temperature: d.bodyTemperatureCelsius,
-    steps: d.movementData.stepCount,
-    sleep: d.sleepData.durationHours,
+    steps: d.movementData?.stepCount, // Use optional chaining
+    sleep: d.sleepData?.durationHours, // Use optional chaining
   }));
 
 
@@ -293,6 +357,37 @@ export default function PatientProfilePage() {
           </CardContent>
         </Card>
       )}
+
+       {/* Real-time Biofeedback Section */}
+        <Card>
+            <CardHeader>
+                <CardTitle>Biofeedback em Tempo Real</CardTitle>
+                <CardDescription>Valores atuais simulados dos sensores vestíveis.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+                <RealTimeMetric
+                    icon={HeartPulse}
+                    label="Frequência Cardíaca"
+                    value={realTimeHR}
+                    unit="bpm"
+                 />
+                 <RealTimeMetric
+                    icon={Activity} // Using Activity icon for HRV as it relates to heart 'activity' pattern
+                    label="Variabilidade da FC"
+                    value={realTimeHRV}
+                    unit="ms"
+                    iconClassName="text-blue-500" // Example color override
+                 />
+                  <RealTimeMetric
+                    icon={Thermometer} // Placeholder - could use Activity or a custom EDA icon if available
+                    label="Atividade Eletrodérmica"
+                    value={realTimeEDA}
+                    unit="µS"
+                     iconClassName="text-orange-500" // Example color override
+                 />
+            </CardContent>
+        </Card>
+
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="overview" className="w-full">
@@ -351,7 +446,7 @@ export default function PatientProfilePage() {
                      </CardHeader>
                      <CardContent>
                         {/* Get steps from the second to last entry in wearable data */}
-                         <div className="text-2xl font-bold">{patient.wearableData[patient.wearableData.length - 2]?.movementData.stepCount?.toLocaleString() ?? 'N/A'}</div>
+                         <div className="text-2xl font-bold">{patient.wearableData[patient.wearableData.length - 2]?.movementData?.stepCount?.toLocaleString() ?? 'N/A'}</div>
                          <p className="text-xs text-muted-foreground">Contagem de passos do dia anterior</p>
                      </CardContent>
                  </Card>
@@ -391,7 +486,7 @@ export default function PatientProfilePage() {
              {/* Biofeedback Chart (HR, HRV, EDA) */}
              <Card>
                <CardHeader>
-                 <CardTitle>Biofeedback</CardTitle>
+                 <CardTitle>Biofeedback (Histórico)</CardTitle>
                   <CardDescription>Frequência Cardíaca (FC), Variabilidade da FC (VFC) e Atividade Eletrodérmica (AED) - Últimos {chartDataPoints} dias</CardDescription>
                </CardHeader>
                <CardContent>
@@ -415,7 +510,7 @@ export default function PatientProfilePage() {
               {/* Temperature Chart */}
              <Card>
                <CardHeader>
-                 <CardTitle>Temperatura Corporal</CardTitle>
+                 <CardTitle>Temperatura Corporal (Histórico)</CardTitle>
                   <CardDescription>Últimos {chartDataPoints} dias (°C)</CardDescription>
                </CardHeader>
                <CardContent>
@@ -441,7 +536,7 @@ export default function PatientProfilePage() {
              {/* Sleep & Movement Chart */}
              <Card className="lg:col-span-2"> {/* Make this chart span full width on larger screens */}
                <CardHeader>
-                 <CardTitle>Sono e Movimento</CardTitle>
+                 <CardTitle>Sono e Movimento (Histórico)</CardTitle>
                   <CardDescription>Duração do Sono (horas) e Passos - Últimos {chartDataPoints} dias</CardDescription>
                </CardHeader>
                <CardContent>
