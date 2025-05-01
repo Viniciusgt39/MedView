@@ -13,6 +13,7 @@ import {z} from 'genkit';
 import { getMockPatientProfile } from '@/types/patient'; // Use the comprehensive mock function
 // import { getMedications } from '@/services/medication'; // Included in getMockPatientProfile
 // import { getWearableData } from '@/services/wearable-data'; // Included in getMockPatientProfile
+import { format } from 'date-fns'; // Import the format function
 
 
 const GenerateInsightsInputSchema = z.object({
@@ -93,9 +94,9 @@ const generateInsightsFlow = ai.defineFlow<
 
     // Wearable Data Summary (e.g., Avg HR, Last Sleep, Avg Steps for last 7 days)
      const last7DaysWearable = patientProfile.wearableData.slice(-7);
-     const avgHr = last7DaysWearable.length > 0 ? (last7DaysWearable.reduce((sum, d) => sum + d.heartRateBpm, 0) / last7DaysWearable.length).toFixed(0) : 'N/A';
+     const avgHr = last7DaysWearable.length > 0 ? (last7DaysWearable.reduce((sum, d) => sum + (d.heartRateBpm ?? 0), 0) / last7DaysWearable.length).toFixed(0) : 'N/A';
      const lastSleep = last7DaysWearable[last7DaysWearable.length - 1]?.sleepData;
-     const avgSteps = last7DaysWearable.length > 0 ? (last7DaysWearable.reduce((sum, d) => sum + d.movementData.stepCount, 0) / last7DaysWearable.length).toFixed(0) : 'N/A';
+     const avgSteps = last7DaysWearable.length > 0 ? (last7DaysWearable.reduce((sum, d) => sum + (d.movementData?.stepCount ?? 0), 0) / last7DaysWearable.length).toFixed(0) : 'N/A';
      const wearableDataSummary = `Média FC (7d): ${avgHr} bpm. Último Sono: ${lastSleep?.durationHours ?? 'N/A'}h (${lastSleep?.quality ?? 'N/A'}). Média Passos (7d): ${avgSteps}.`;
 
 
