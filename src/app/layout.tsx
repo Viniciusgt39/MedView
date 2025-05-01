@@ -18,8 +18,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR"> {/* Set language to Portuguese */}
-      <body className={`${inter.variable} font-sans antialiased`}> {/* Use Inter font */}
+    <html lang="pt-BR">{/* Set language to Portuguese */}
+      <body className={`${inter.variable} font-sans antialiased`}>{/* Use Inter font */}
         <AppLayout>{children}</AppLayout>
         <Toaster /> {/* Add Toaster for notifications */}
       </body>
