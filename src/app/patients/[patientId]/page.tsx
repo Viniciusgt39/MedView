@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -69,6 +70,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea"; // Import Textarea
 import { Label } from "@/components/ui/label"; // Import Label
 import { Input } from "@/components/ui/input"; // Import Input
+import { cn } from "@/lib/utils"; // Import cn utility
 
 // Chart configuration for colors and labels
 const chartConfig = {
@@ -737,3 +739,4 @@ export default function PatientProfilePage() {
     </div>
   );
 }
+
