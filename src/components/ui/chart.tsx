@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -195,7 +196,7 @@ const ChartTooltipContent = React.forwardRef<
 
             return (
               <div
-                key={item.dataKey}
+                key={item.dataKey || key} // Use dataKey or key for uniqueness
                 className={cn(
                   "flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-muted-foreground",
                   indicator === "dot" && "items-center"
@@ -243,7 +244,11 @@ const ChartTooltipContent = React.forwardRef<
                       </div>
                       {item.value !== undefined && item.value !== null && ( // Check for undefined/null
                         <span className="font-mono font-medium tabular-nums text-foreground">
-                          {item.value.toLocaleString()}
+                          {/* Format value with percentage for Pie charts */}
+                          {item.payload?.percent !== undefined
+                              ? `${(item.payload.percent * 100).toFixed(0)}% (${item.value.toLocaleString()})`
+                              : item.value.toLocaleString()
+                           }
                         </span>
                       )}
                     </div>
@@ -289,9 +294,9 @@ const ChartLegendContent = React.forwardRef<
         )}
       >
         {payload.map((item) => {
-          const key = `${nameKey || item.dataKey || "value"}`
+          const key = `${nameKey || item.dataKey || item.value}` // Use item.value as potential fallback key for legend item
           const itemConfig = getPayloadConfigFromPayload(config, item, key)
-          const color = item.color || (key in config ? `var(--color-${key})` : undefined);
+          const color = item.color || (itemConfig?.color) || (key in config ? `var(--color-${key})` : undefined) || item.payload?.fill; // Prefer item.color, fallback to config, then payload fill
 
 
           return (
@@ -301,15 +306,17 @@ const ChartLegendContent = React.forwardRef<
                 "flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground"
               )}
             >
-              {itemConfig?.icon && !hideIcon ? (
-                <itemConfig.icon />
-              ) : (
-                <div
-                  className="h-2 w-2 shrink-0 rounded-[2px]"
-                  style={{
-                    backgroundColor: color,
-                  }}
-                />
+              {!hideIcon && (
+                itemConfig?.icon ? (
+                    <itemConfig.icon />
+                 ) : (
+                    <div
+                    className="h-2 w-2 shrink-0 rounded-[2px]"
+                    style={{
+                        backgroundColor: color,
+                    }}
+                    />
+                )
               )}
               {itemConfig?.label || item.value} {/* Fallback to item.value if label is missing */}
             </div>
@@ -331,21 +338,24 @@ function getPayloadConfigFromPayload(
     return undefined
   }
 
+  // Standard payload access
   const payloadPayload =
     "payload" in payload &&
     typeof payload.payload === "object" &&
     payload.payload !== null
       ? payload.payload
-      : undefined
+      : undefined;
+
+    // Access for Legend payload items (structure is different)
+    const legendPayload =
+        "payload" in payload && payload.payload === undefined // Legend payload structure
+        ? payload
+        : undefined;
 
   let configLabelKey: string = key
 
+    // Try getting key from standard payload.payload
   if (
-    key in payload &&
-    typeof payload[key as keyof typeof payload] === "string"
-  ) {
-    configLabelKey = payload[key as keyof typeof payload] as string
-  } else if (
     payloadPayload &&
     key in payloadPayload &&
     typeof payloadPayload[key as keyof typeof payloadPayload] === "string"
@@ -354,18 +364,32 @@ function getPayloadConfigFromPayload(
       key as keyof typeof payloadPayload
     ] as string
   }
+   // Try getting key from legend payload (item.value often holds the name)
+   else if (
+        legendPayload && 'value' in legendPayload && typeof legendPayload.value === 'string'
+    ){
+        configLabelKey = legendPayload.value;
+   }
+   // Check original key directly
+   else if (
+    key in payload &&
+    typeof payload[key as keyof typeof payload] === "string"
+  ) {
+    configLabelKey = payload[key as keyof typeof payload] as string
+  }
 
    // Handle cases where the config key might be different from the data key
    // e.g., if dataKey is "value" but config uses specific names like "heartRate"
-    if (
-        payloadPayload && typeof payloadPayload === "object" && 'name' in payloadPayload &&
-        typeof payloadPayload.name === 'string' && payloadPayload.name in config
-     ) {
-        return config[payloadPayload.name];
+    const nameFromPayload = payloadPayload && 'name' in payloadPayload && typeof payloadPayload.name === 'string' ? payloadPayload.name : undefined;
+    const nameFromLegend = legendPayload && 'value' in legendPayload && typeof legendPayload.value === 'string' ? legendPayload.value : undefined; // Legend uses 'value' for name
+    const potentialNameKey = nameFromPayload || nameFromLegend;
+
+    if (potentialNameKey && potentialNameKey in config) {
+        return config[potentialNameKey];
     }
 
 
-    // Fallback to direct key lookup
+    // Fallback to direct key lookup using derived or original key
     return configLabelKey in config
         ? config[configLabelKey]
         : config[key as keyof typeof config];
@@ -379,3 +403,5 @@ export {
   ChartLegendContent,
   ChartStyle,
 }
+
+    

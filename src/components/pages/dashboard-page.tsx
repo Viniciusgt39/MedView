@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -18,21 +19,98 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUp, ArrowDown, Minus, UserPlus, Users, AlertCircle } from "lucide-react"; // Added Users
+import { ArrowUp, ArrowDown, Minus, UserPlus, Users, AlertCircle, BarChart2, PieChart } from "lucide-react"; // Added Users, AlertCircle, BarChart2, PieChart
 import Link from "next/link";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from "@/components/ui/chart";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Pie, Cell, LabelList } from "recharts"; // Import Pie chart components
+
+// Chart configuration for colors and labels
+const moodChartConfig = {
+  count: { label: "Pacientes" },
+  Feliz: { label: "Feliz", color: "hsl(var(--chart-1))" },
+  Calmo: { label: "Calmo", color: "hsl(var(--chart-2))" },
+  Ansioso: { label: "Ansioso", color: "hsl(var(--chart-3))" },
+  Triste: { label: "Triste", color: "hsl(var(--chart-4))" },
+  Irritado: { label: "Irritado", color: "hsl(var(--chart-5))" },
+  Estressado: { label: "Estressado", color: "hsl(var(--chart-1))" }, // Reuse color or add more charts
+  Outro: { label: "Outro/N/A", color: "hsl(var(--muted))" },
+} satisfies ChartConfig;
+
+const adherenceChartConfig = {
+  count: { label: "Pacientes" },
+  Baixa: { label: "Baixa (<70%)", color: "hsl(var(--destructive))" },
+  Media: { label: "Média (70-89%)", color: "hsl(var(--chart-3))" }, // Yellow/Orange might be better, using chart-3 for now
+  Alta: { label: "Alta (≥90%)", color: "hsl(var(--chart-1))" }, // Green
+  NA: { label: "N/A", color: "hsl(var(--muted))" },
+} satisfies ChartConfig;
+
 
 export default function DashboardPage() {
   const [patients, setPatients] = React.useState<PatientSummary[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [moodChartData, setMoodChartData] = React.useState<any[]>([]);
+  const [adherenceChartData, setAdherenceChartData] = React.useState<any[]>([]);
 
   React.useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const data = await getMockPatientSummaries();
-      setPatients(data);
-      setLoading(false);
+      try {
+          const data = await getMockPatientSummaries();
+          setPatients(data);
+
+          // Process data for Mood Chart
+          const moodCounts = data.reduce((acc, patient) => {
+            const mood = patient.lastMood || 'Outro'; // Group undefined/null as 'Other'
+            acc[mood] = (acc[mood] || 0) + 1;
+            return acc;
+          }, {} as { [key: string]: number });
+
+          const processedMoodData = Object.entries(moodCounts).map(([mood, count]) => ({
+            mood,
+            count,
+            fill: moodChartConfig[mood as keyof typeof moodChartConfig]?.color || moodChartConfig.Outro.color, // Assign color dynamically
+          }));
+          setMoodChartData(processedMoodData);
+
+          // Process data for Adherence Chart
+          const adherenceCounts = data.reduce((acc, patient) => {
+              const adherence = patient.medicationAdherence;
+              let category: keyof typeof adherenceChartConfig;
+              if (adherence === undefined || adherence === null) {
+                  category = 'NA';
+              } else if (adherence < 70) {
+                  category = 'Baixa';
+              } else if (adherence < 90) {
+                  category = 'Media';
+              } else {
+                  category = 'Alta';
+              }
+              acc[category] = (acc[category] || 0) + 1;
+              return acc;
+          }, {} as { [key: string]: number });
+
+          const processedAdherenceData = Object.entries(adherenceCounts).map(([level, count]) => ({
+              level: adherenceChartConfig[level as keyof typeof adherenceChartConfig]?.label || level, // Use label from config
+              count,
+              fill: adherenceChartConfig[level as keyof typeof adherenceChartConfig]?.color || adherenceChartConfig.NA.color,
+          }));
+          setAdherenceChartData(processedAdherenceData);
+
+      } catch (error) {
+          console.error("Failed to fetch or process patient data:", error);
+          // Optionally, set an error state or show a toast notification
+      } finally {
+          setLoading(false);
+      }
     };
     fetchData();
   }, []);
@@ -104,11 +182,119 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      {/* Charts Section */}
+       <div className="grid gap-4 md:grid-cols-2">
+           {/* Mood Distribution Chart */}
+           <Card>
+               <CardHeader>
+                   <CardTitle className="flex items-center gap-2">
+                     <PieChart className="h-5 w-5 text-primary" />
+                     Distribuição de Humor (Último)
+                   </CardTitle>
+                   <CardDescription>Distribuição do último humor registrado pelos pacientes.</CardDescription>
+               </CardHeader>
+               <CardContent>
+                   {loading ? (
+                        <div className="flex items-center justify-center h-[250px]"> <Skeleton className="h-full w-full" /> </div>
+                    ) : moodChartData.length > 0 ? (
+                       <ChartContainer config={moodChartConfig} className="h-[250px] w-full">
+                            {/* Using Pie Chart for Mood */}
+                           <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Tooltip
+                                        cursor={false}
+                                        content={<ChartTooltipContent hideLabel />}
+                                    />
+                                    <Pie
+                                        data={moodChartData}
+                                        dataKey="count"
+                                        nameKey="mood"
+                                        innerRadius={60}
+                                        strokeWidth={2}
+                                        labelLine={false} // Remove label lines
+                                        label={({ payload, percent }) => // Custom label inside slice
+                                            `${payload.mood}: ${(percent * 100).toFixed(0)}%`
+                                        }
+                                         labelPosition="inside" // Doesn't work directly, custom label needed
+                                    >
+                                         {/* Labels inside the Pie */}
+                                         <LabelList
+                                            dataKey="mood"
+                                            position="inside"
+                                            formatter={(value: string, entry: any) => {
+                                                const percentage = (entry.payload.percent * 100).toFixed(0);
+                                                return `${value}: ${percentage}%`;
+                                             }}
+                                             className="fill-background text-xs font-medium" // Style label
+                                         />
+                                        {moodChartData.map((entry) => (
+                                            <Cell key={`cell-${entry.mood}`} fill={entry.fill} />
+                                        ))}
+                                    </Pie>
+                                    <ChartLegend content={<ChartLegendContent />} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                       </ChartContainer>
+                   ) : (
+                       <div className="flex items-center justify-center h-[250px] text-muted-foreground">Nenhum dado de humor disponível.</div>
+                   )}
+               </CardContent>
+           </Card>
+
+           {/* Adherence Distribution Chart */}
+           <Card>
+               <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                       <BarChart2 className="h-5 w-5 text-primary" />
+                       Distribuição de Adesão
+                   </CardTitle>
+                   <CardDescription>Distribuição dos níveis de adesão à medicação.</CardDescription>
+               </CardHeader>
+               <CardContent>
+                    {loading ? (
+                         <div className="flex items-center justify-center h-[250px]"> <Skeleton className="h-full w-full" /> </div>
+                    ) : adherenceChartData.length > 0 ? (
+                       <ChartContainer config={adherenceChartConfig} className="h-[250px] w-full">
+                           <BarChart accessibilityLayer data={adherenceChartData} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
+                               <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                                <XAxis
+                                    dataKey="level"
+                                    tickLine={false}
+                                    tickMargin={10}
+                                    axisLine={false}
+                                />
+                                <YAxis allowDecimals={false} />
+                                <Tooltip
+                                     cursor={false} // Disable cursor line
+                                    content={<ChartTooltipContent hideIndicator />} // Use ShadCN tooltip
+                                />
+                                <Bar dataKey="count" radius={4}>
+                                     {/* Color bars based on the 'fill' property in data */}
+                                     {adherenceChartData.map((entry) => (
+                                        <Cell key={`cell-${entry.level}`} fill={entry.fill} />
+                                     ))}
+                                      <LabelList
+                                        position="top"
+                                        offset={4}
+                                        className="fill-foreground text-xs"
+                                        formatter={(value: number) => value.toString()}
+                                    />
+                                </Bar>
+                           </BarChart>
+                       </ChartContainer>
+                   ) : (
+                        <div className="flex items-center justify-center h-[250px] text-muted-foreground">Nenhum dado de adesão disponível.</div>
+                   )}
+               </CardContent>
+           </Card>
+       </div>
+
+
       {/* Patient Overview Table */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Visão Geral dos Pacientes</CardTitle>
+            <CardTitle>Visão Geral dos Pacientes (Recentes)</CardTitle>
             <CardDescription>
               Resumo rápido do status dos seus pacientes.
             </CardDescription>
@@ -140,7 +326,8 @@ export default function DashboardPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {patients.map((patient) => (
+               {/* Show only top 5 or 10 patients for brevity */}
+              {patients.slice(0, 5).map((patient) => (
                 <TableRow key={patient.id}>
                   <TableCell className="font-medium">{patient.name}</TableCell>
                   <TableCell className="hidden md:table-cell">
@@ -188,8 +375,17 @@ export default function DashboardPage() {
             </TableBody>
           </Table>
            )}
+            {patients.length > 5 && (
+                 <div className="mt-4 text-center">
+                     <Button asChild variant="link">
+                         <Link href="/patients">Ver todos os pacientes</Link>
+                     </Button>
+                 </div>
+             )}
         </CardContent>
       </Card>
     </div>
   );
 }
+
+    
