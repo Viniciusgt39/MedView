@@ -213,19 +213,19 @@ export default function DashboardPage() {
                                         innerRadius={60}
                                         strokeWidth={2}
                                         labelLine={false} // Remove label lines
-                                        label={({ payload, percent }) => // Custom label inside slice
-                                            `${payload.mood}: ${(percent * 100).toFixed(0)}%`
-                                        }
-                                         labelPosition="inside" // Doesn't work directly, custom label needed
                                     >
                                          {/* Labels inside the Pie */}
                                          <LabelList
                                             dataKey="mood"
                                             position="inside"
                                             formatter={(value: string, entry: any) => {
-                                                const percentage = (entry.payload.percent * 100).toFixed(0);
-                                                // Only show label if percentage is significant enough (e.g., > 5%)
-                                                return percentage > 5 ? `${value}: ${percentage}%` : '';
+                                                // Check if entry and entry.percent exist
+                                                if (entry && typeof entry.percent === 'number') {
+                                                    const percentage = (entry.percent * 100).toFixed(0);
+                                                    // Only show label if percentage is significant enough (e.g., > 5%)
+                                                    return Number(percentage) > 5 ? `${value}: ${percentage}%` : '';
+                                                }
+                                                return ''; // Return empty string if data is missing
                                              }}
                                              className="fill-background text-xs font-medium pointer-events-none" // Style label
                                          />
@@ -390,3 +390,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
