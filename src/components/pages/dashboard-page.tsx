@@ -32,7 +32,7 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from "@/components/ui/chart";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Pie, Cell, LabelList } from "recharts"; // Import Pie chart components
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Pie, Cell, LabelList, PieChart } from "recharts"; // Import Pie chart components
 
 // Chart configuration for colors and labels
 const moodChartConfig = {
