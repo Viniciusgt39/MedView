@@ -40,7 +40,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         <SidebarHeader className="items-center">
            <Stethoscope className="size-6 text-primary" />
            <span className="text-lg font-semibold text-primary group-data-[collapsible=icon]:hidden">
-             MediView
+             NexusView
            </span>
            <SidebarTrigger className="ml-auto md:hidden" />
         </SidebarHeader>
