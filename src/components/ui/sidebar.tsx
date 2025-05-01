@@ -120,6 +120,8 @@ const SidebarProvider = React.forwardRef<
     React.useEffect(() => {
       const handleKeyDown = (event: KeyboardEvent) => {
         if (
+          event.key && // Check if event.key exists
+          typeof event.key === 'string' && // Check if event.key is a string
           event.key.toLowerCase() === SIDEBAR_KEYBOARD_SHORTCUT &&
           (event.metaKey || event.ctrlKey)
         ) {
@@ -590,10 +592,17 @@ const SidebarMenuButton = React.forwardRef<
     const Comp = asChild ? Slot : "button"
     const { isMobile, state } = useSidebar()
 
+    const buttonContent = (
+         <>
+            {children}
+         </>
+    );
+
+
     const button = (
       <Comp
         ref={ref}
-        data-sidebar="menu-button"
+        data-sidebar="menu-button" // Removed: data-sidebar prop is invalid on Slot/button
         data-size={size}
         data-active={isActive}
         className={cn(sidebarMenuButtonVariants({ variant, size }), className,
@@ -601,7 +610,7 @@ const SidebarMenuButton = React.forwardRef<
          )}
         {...props}
       >
-        {children}
+        {buttonContent}
       </Comp>
     )
 
