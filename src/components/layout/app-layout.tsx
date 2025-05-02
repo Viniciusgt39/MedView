@@ -36,7 +36,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   };
 
   return (
-    <SidebarProvider defaultOpen={true} collapsible="icon">
+    <SidebarProvider defaultOpen={true}>
       <Sidebar>
         <SidebarHeader className="items-center">
            <Stethoscope className="size-6 text-primary" />
@@ -114,8 +114,8 @@ export function AppLayout({ children }: AppLayoutProps) {
           </SidebarFooter>
         </Link>
       </Sidebar>
-      {/* Main content area */}
-      <SidebarInset className="p-4 md:p-6">
+      {/* Main content area - Reduced horizontal padding */}
+      <SidebarInset className="py-4 px-2 md:py-6 md:px-4">
         {children}
       </SidebarInset>
     </SidebarProvider>
