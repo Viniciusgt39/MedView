@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -98,17 +99,20 @@ export function AppLayout({ children }: AppLayoutProps) {
           </SidebarMenu>
         </SidebarContent>
 
-        <SidebarFooter className="items-center gap-3">
-           <Avatar className="size-8">
-             {/* Placeholder image for doctor */}
-             <AvatarImage src="https://picsum.photos/id/237/32/32" data-ai-hint="doctor avatar" alt="Dr. Profile" />
-             <AvatarFallback>DR</AvatarFallback>
-           </Avatar>
-           <div className="flex flex-col text-sm group-data-[collapsible=icon]:hidden">
-             <span className="font-medium">Dr. Exemplo</span>
-             <span className="text-muted-foreground">Médico</span>
-           </div>
-        </SidebarFooter>
+        {/* Wrap footer content in a Link to the profile page */}
+        <Link href="/profile" className="block group/profile-link" title="Ver Perfil">
+          <SidebarFooter className="items-center gap-3 group-hover/profile-link:bg-sidebar-accent transition-colors">
+             <Avatar className="size-8">
+               {/* Placeholder image for doctor */}
+               <AvatarImage src="https://picsum.photos/id/237/32/32" data-ai-hint="doctor avatar" alt="Dr. Profile" />
+               <AvatarFallback>RA</AvatarFallback> {/* Initials for Dr. Ricardo Alves */}
+             </Avatar>
+             <div className="flex flex-col text-sm group-data-[collapsible=icon]:hidden">
+               <span className="font-medium">Dr. Ricardo Alves</span> {/* Updated Name */}
+               <span className="text-muted-foreground">Médico</span>
+             </div>
+          </SidebarFooter>
+        </Link>
       </Sidebar>
       {/* Main content area */}
       <SidebarInset className="p-4 md:p-6">
