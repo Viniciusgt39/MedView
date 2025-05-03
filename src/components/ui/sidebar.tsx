@@ -345,11 +345,9 @@ const SidebarInset = React.forwardRef<
     <main
       ref={ref}
       className={cn(
-        "flex-1 transition-[margin-left,margin-right] duration-300 ease-in-out", // Smooth margin transition
-         // Adjust margin based on sidebar state, only on desktop
-        !isMobile && state === 'expanded' && "md:ml-[--sidebar-width]",
-        !isMobile && state === 'collapsed' && "md:ml-[--sidebar-width-icon]", // Adjust for collapsed width
-        // Handle right-side sidebar if implemented (add md:mr-[...])
+        "flex-1", // Removed transition and margin classes
+        // Removed: !isMobile && state === 'expanded' && "md:ml-[--sidebar-width]",
+        // Removed: !isMobile && state === 'collapsed' && "md:ml-[--sidebar-width-icon]",
         className
       )}
       {...props}
@@ -600,7 +598,6 @@ const SidebarMenuButton = React.forwardRef<
     const button = (
       <Comp
         ref={ref}
-        data-sidebar="menu-button" // Removed: data-sidebar prop is invalid on Slot/button
         data-size={size}
         data-active={isActive}
         className={cn(sidebarMenuButtonVariants({ variant, size }), className,
@@ -808,3 +805,4 @@ export {
   SidebarTrigger,
   useSidebar,
 }
+
