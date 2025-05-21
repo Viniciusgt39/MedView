@@ -352,7 +352,7 @@ export default function PatientProfilePage() {
         <Card className="bg-secondary border-primary/30">
           <CardHeader className="flex flex-row items-center gap-2 pb-2">
              <BrainCircuit className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg text-primary-foreground">Insights da IA</CardTitle>
+            <CardTitle className="text-lg text-secondary-foreground">Insights da IA</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-secondary-foreground">{patient.aiInsights}</p>
@@ -718,7 +718,7 @@ export default function PatientProfilePage() {
                                        )}
                                         {/* Example for Notes */}
                                        {event.type === 'note' && event.details && typeof event.details === 'object' && 'content' in event.details && (
-                                           <p className="text-xs text-muted-foreground italic mt-1 truncate">"{event.details.content}"</p>
+                                           <p className="text-xs text-muted-foreground italic mt-1 truncate">"{String(event.details.content)}"</p>
                                        )}
                                   </div>
                               </div>
